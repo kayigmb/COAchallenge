@@ -1,4 +1,4 @@
-   #!/bin/bash
+#!/bin/bash
 
 # creates the env file
 if [ ! -f .env ]; then
@@ -19,4 +19,3 @@ fi
 # installs dependencies
 poetry lock
 poetry install;
-poetry shell
