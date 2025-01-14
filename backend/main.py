@@ -10,7 +10,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from src.config import settings
 from src.database import engine
 from src.middlewares.auth import auth
-from src.routers import auth_router
+from src.routers import account_router, auth_router
 from src.utils.universal_errors import get_universal_errors
 
 
@@ -40,7 +40,7 @@ async def root(request: Request):
     return {"message": user_data}
 
 
-routes = [auth_router.router]
+routes = [auth_router.router, account_router.router]
 
 for route in routes:
     app.include_router(router=route, prefix="/api/v1")

@@ -4,9 +4,9 @@ import jwt
 from fastapi import HTTPException, status
 from fastapi.openapi.models import HTTPBearer
 from passlib.context import CryptContext
-from sqlmodel import SQLModel
+from sqlmodel import Session, SQLModel
 
-from src.models.models import Users
+from src.models.models import Blacklist, Users
 from src.utils.fetcher import Fetcher
 
 encrypt_configuration = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -119,3 +119,19 @@ class AuthController:
             ).model_dump()
         )
         return create_token
+
+
+def logout(token, db: Session):
+    Fetcher(
+        database=db,
+        table=Blacklist,
+        where=(Blacklist.token == token,),
+        error="Unauthorized access",
+        status_code=status.HTTP_401_UNAUTHORIZED,
+    ).get_exist()
+
+    add = Blacklist(token=token)
+    db.add(add)
+    db.commit()
+
+    return {"message": "Logout successful"}

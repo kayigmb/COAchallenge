@@ -1,7 +1,9 @@
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Depends, status
+from fastapi.security import HTTPAuthorizationCredentials
 
-from src.controllers.auth_controller import AuthController, AuthControllerInput
+from src.controllers.auth_controller import AuthController, AuthControllerInput, logout
 from src.database import database
+from src.middlewares.auth import BearerToken, auth
 from src.schemas.authentication_schemas import (
     LoginResultSchema,
     LoginSchema,
@@ -45,3 +47,11 @@ async def login(input_data: LoginSchema, db: database):
         message="Login successful",
         data=LoginResultSchema(access_token=login_),
     )
+
+
+@router.get("/logout", status_code=status.HTTP_200_OK, dependencies=[Depends(auth)])
+async def logout_(
+    db: database, token: HTTPAuthorizationCredentials = Depends(BearerToken)
+):
+    logout(token.credentials, db)
+    return {"message": "Logout successful"}

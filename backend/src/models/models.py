@@ -89,9 +89,14 @@ class Budgets(CommonBase, table=True):
     accounts: Accounts = Relationship(back_populates="budgets")
 
 
+class Blacklist(CommonBase, table=True):
+    token: str = Field(nullable=False, index=True)
+
+
 class TransactionTypesEnum(str, Enum):
     INCOME = "income"
     EXPENSE = "expense"
+    TOP_UP = "top_up"
 
     def __str__(self):
         return str(self.value)
