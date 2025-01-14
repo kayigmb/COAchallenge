@@ -76,12 +76,21 @@ class BudgetStatusTypesEnum(str, Enum):
         return str(self.value)
 
 
+class BudgetTypesEnum(str, Enum):
+    OVERALL = "overall"
+    ACCOUNT = "account"
+
+    def __str__(self):
+        return str(self.value)
+
+
 class Budgets(CommonBase, table=True):
     user_id: UUID = Field(nullable=False, index=True, foreign_key="users.id")
-    account_id: UUID = Field(nullable=False, index=True, foreign_key="accounts.id")
+    account_id: UUID = Field(nullable=True, index=True, foreign_key="accounts.id")
     amount: float = Field(nullable=True, default=0.0)
     limit: float = Field(nullable=False, default=0.0)
     status: str = Field(nullable=True, default=BudgetStatusTypesEnum.ACTIVE.value)
+    type: str = Field(nullable=True, default=None)
     start_date: datetime = Field(default_factory=datetime.now, nullable=True)
     end_date: datetime = Field(default_factory=datetime.now, nullable=True)
 
@@ -96,7 +105,6 @@ class Blacklist(CommonBase, table=True):
 class TransactionTypesEnum(str, Enum):
     INCOME = "income"
     EXPENSE = "expense"
-    TOP_UP = "top_up"
 
     def __str__(self):
         return str(self.value)
@@ -111,7 +119,7 @@ class Transactions(CommonBase, table=True):
     )
     amount: float = Field(nullable=False, default=0.0)
     type: str = Field(nullable=False, default=None)
-    description: str = Field(nullable=False, default=None)
+    description: str = Field(nullable=True, default=None)
     transaction_time: datetime = Field(default_factory=datetime.now, nullable=True)
 
     users: Users = Relationship(back_populates="transactions")

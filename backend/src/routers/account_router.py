@@ -43,7 +43,7 @@ async def get_account(db: database, account_id: UUID):
         error="Account not found",
     ).get_one()
     return ResponseSchema(
-        message="Account created",
+        message="Account found",
         data=AccountsResult(**get_accounts.model_dump()),
     )
 
