@@ -1,7 +1,6 @@
 from typing import Generic, TypeVar
 from uuid import UUID
 
-from fastapi import status
 from sqlmodel import Session
 
 from src.models.models import Accounts
@@ -32,13 +31,10 @@ class AccountController(Generic[T]):
             where=(Accounts.id == account_id,),
             error="Accounts doesnot exists",
         ).get_one()
-
         update_record = input_data.model_dump(exclude_none=True, exclude_unset=True)
         get_accounts.sqlmodel_update(update_record)
-
         self.db.commit()
         self.db.refresh(get_accounts)
-
         return get_accounts
 
     def add_accounts(self, input_data: AccountsInput):
@@ -47,9 +43,7 @@ class AccountController(Generic[T]):
             user_id=self.user_id,
             **input_data.model_dump(),
         )
-
         self.db.add(account)
         self.db.commit()
         self.db.refresh(account)
-
         return account

@@ -111,7 +111,7 @@ class Transactions(CommonBase, table=True):
     )
     amount: float = Field(nullable=False, default=0.0)
     type: str = Field(nullable=False, default=None)
-    description: str = Field(nullable=False, default=None)
+    description: str = Field(nullable=True, default=None)
     transaction_time: datetime = Field(default_factory=datetime.now, nullable=True)
 
     users: Users = Relationship(back_populates="transactions")
