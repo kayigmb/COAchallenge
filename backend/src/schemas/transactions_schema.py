@@ -9,8 +9,9 @@ class TransactionsInput(SQLModel):
     amount: float
     type: str
     description: str
-    category: Optional[UUID] = None
-    sub_category: Optional[UUID] = None
+    category_id: Optional[UUID] = None
+    sub_category_id: Optional[UUID] = None
+    account_id: UUID
 
 
 class TransactionsResponse(SQLModel):
@@ -18,9 +19,9 @@ class TransactionsResponse(SQLModel):
     amount: float
     type: str
     description: str
-    category: Optional[UUID] = None
-    sub_category: Optional[UUID] = None
+    category_id: Optional[UUID] = None
+    sub_category_id: Optional[UUID] = None
     account_id: UUID
     user_id: UUID
-    transactions_time: datetime
+    transaction_time: datetime
     is_active: bool

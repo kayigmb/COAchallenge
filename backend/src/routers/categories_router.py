@@ -90,9 +90,21 @@ async def update_category(
     )
 
 
-@router.delete("/{category_id}")
-async def delete_category(category_id: UUID):
-    return {"message": "Category deleted"}
+@router.delete(
+    "/{category_id}",
+    status_code=status.HTTP_200_OK,
+)
+async def delete_category(category_id: UUID, db: database):
+    get_category = Fetcher(
+        database=db,
+        table=Categories,
+        where=(Categories.id == category_id,),
+        error="Category not found",
+    ).get_one()
+
+    get_category.is_deleted = True
+    db.commit()
+    return {"message": "Account deleted"}
 
 
 @router_sub.get("")
