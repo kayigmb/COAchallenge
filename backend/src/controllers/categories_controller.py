@@ -76,11 +76,11 @@ class SubCategoryController:
         self.database.refresh(category)
         return category
 
-    def update_category(self, input_data: SubCategoryInput, category_id: UUID):
+    def update_category(self, input_data: CategoryInput, sub_category_id: UUID):
         get_category = Fetcher(
             database=self.database,
             table=SubCategories,
-            where=(SubCategories.id == category_id,),
+            where=(SubCategories.id == sub_category_id,),
             error="Category not found",
         ).get_one()
 
