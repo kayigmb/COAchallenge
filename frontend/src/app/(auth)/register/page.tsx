@@ -18,7 +18,6 @@ import { PasswordInput } from "@/components/ui/passwordinput";
 import { useMutation } from "@tanstack/react-query";
 import request from "@/lib/axios";
 import { toast } from "react-toastify";
-import {router} from "next/client";
 
 const registerFormSchema = z.object({
   name: z.string().trim().nonempty({ message: "Name is required" }),
@@ -44,9 +43,10 @@ export default function RegisterPage() {
       request.post("/auth/signup", data),
     onSuccess: () => {
       toast.success("Sign up successfully");
-      return router.push("/login");
+      window.location.href = "/login";
+      return;
     },
-    onError: (error:{data:{detail:string}}) => {
+    onError: (error: { data: { detail: string } }) => {
       toast.error(error?.data?.detail);
       return;
     },

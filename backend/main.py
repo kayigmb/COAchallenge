@@ -10,6 +10,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from src.config import settings
 from src.database import engine
 from src.middlewares.auth import auth
+from src.middlewares.cronjob import scheduler
 from src.routers import (
     account_router,
     auth_router,
@@ -25,6 +26,7 @@ from src.utils.universal_errors import get_universal_errors
 async def lifespan(app: FastAPI):
     SQLModel.metadata.create_all(engine)
     yield
+    scheduler.shutdown()
 
 
 app = FastAPI(

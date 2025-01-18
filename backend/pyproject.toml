@@ -17,6 +17,7 @@ psycopg2-binary = "^2.9.10"
 passlib = "^1.7.4"
 itsdangerous = "^2.2.0"
 pyjwt = "^2.9.0"
+apscheduler = "^3.11.0"
 
 
 [build-system]

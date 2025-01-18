@@ -10,10 +10,13 @@ from src.database import database
 from src.middlewares.auth import auth
 from src.models.models import Categories, SubCategories
 from src.schemas.categories_schema import (
+    CategoryFullResponse,
     CategoryInput,
     CategoryResponse,
+    SubCategoryFullResponse,
     SubCategoryInput,
     SubCategoryResponse,
+    SubCategoryUpdate,
 )
 from src.schemas.common_schema import ResponseSchema
 from src.utils.fetcher import Fetcher
@@ -31,7 +34,7 @@ router_sub = APIRouter(
 @router.get(
     "",
     status_code=status.HTTP_200_OK,
-    response_model=PaginationResponse[CategoryResponse],
+    response_model=PaginationResponse[CategoryFullResponse],
 )
 async def get_categories(
     request: Request, db: database, input_data: Paginate = Depends()
@@ -44,7 +47,17 @@ async def get_categories(
     )
     return PaginationResponse(
         pagination=pagination,
-        data=[CategoryResponse(**account.model_dump()) for account in data or []],
+        data=[
+            CategoryFullResponse(
+                category=CategoryResponse(**account.model_dump()),
+                sub_category=[
+                    SubCategoryResponse(**sub_category.model_dump())
+                    for sub_category in account.sub_categories or []
+                    if not sub_category.is_deleted
+                ],
+            )
+            for account in data or []
+        ],
     )
 
 
@@ -112,13 +125,13 @@ async def delete_category(category_id: UUID, db: database):
 
     get_category.is_deleted = True
     db.commit()
-    return {"message": "Account deleted"}
+    return {"message": "Category deleted"}
 
 
 @router_sub.get(
     "",
     status_code=status.HTTP_200_OK,
-    response_model=PaginationResponse[SubCategoryResponse],
+    response_model=PaginationResponse[SubCategoryFullResponse],
 )
 async def get_sub_categories(
     db: database, request: Request, input_data: Paginate = Depends()
@@ -131,7 +144,13 @@ async def get_sub_categories(
     )
     return PaginationResponse(
         pagination=pagination,
-        data=[SubCategoryResponse(**account.model_dump()) for account in data or []],
+        data=[
+            SubCategoryFullResponse(
+                sub_category=SubCategoryResponse(**account.model_dump()),
+                category=CategoryResponse(**account.categories.model_dump()),
+            )
+            for account in data or []
+        ],
     )
 
 
@@ -178,7 +197,7 @@ async def create_sub_category(
     response_model=ResponseSchema[SubCategoryResponse],
 )
 async def update_sub_category(
-    sub_category_id: UUID, request: Request, input_data: CategoryInput, db: database
+    sub_category_id: UUID, request: Request, input_data: SubCategoryUpdate, db: database
 ):
 
     update = SubCategoryController(

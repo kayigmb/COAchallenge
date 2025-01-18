@@ -1,6 +1,5 @@
 from datetime import datetime
 from uuid import UUID
-from warnings import warn
 
 from sqlmodel import Session
 
@@ -63,10 +62,10 @@ async def add_new_transaction(
         ),
     ).get_value()
 
-    if budget_overall:
+    if budget_overall and TransactionTypesEnum.EXPENSE == transaction.type:
         budget_overall.amount += transaction.amount
 
-    if budget_account:
+    if budget_account and TransactionTypesEnum.EXPENSE == transaction.type:
         budget_account.amount += transaction.amount
 
     if transaction.type == TransactionTypesEnum.INCOME:

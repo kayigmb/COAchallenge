@@ -33,7 +33,10 @@ axiosInstance.interceptors.response.use(
       toast("Server network error!", { type: "error" });
     }
 
-    if (error?.response?.status === 401) {
+    if (
+      error?.response?.status === 401 ||
+      error?.response?.data.detail === "Not authenticated"
+    ) {
       if (typeof window !== "undefined") {
         localStorage.clear();
         window.location.href = "/login";

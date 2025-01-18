@@ -14,14 +14,16 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("auth");
+    if (!token) {
+      window.location.href = "/login";
+    }
+  }
   return (
     <html lang="en">
       <body>
-        <ReactQueryProvider>
-
-          {children}
-
-        </ReactQueryProvider>
+        <ReactQueryProvider>{children}</ReactQueryProvider>
         <ToastContainer
           limit={3}
           position="top-right"

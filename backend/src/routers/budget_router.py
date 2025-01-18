@@ -24,25 +24,28 @@ async def get_budgets(
     db: database,
     input_data: Paginate = Depends(),
     status: Optional[BudgetStatusTypesEnum] = None,
-    start_date: Optional[datetime] = datetime.now(),
+    start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
+    account: Optional[UUID] = None,
     type: Optional[BudgetTypesEnum] = None,
 ):
     filter = ()
     if status:
         filter += (Budgets.status == status,)
     if start_date:
-        filter += (Budgets.start_date > start_date,)
+        filter += (Budgets.created_at >= start_date,)
     if end_date:
-        filter += (Budgets.end_date < end_date,)
+        filter += (Budgets.created_at <= end_date,)
     if type:
         filter += (Budgets.type == type,)
+    if account:
+        filter += (Budgets.account_id == account,)
 
     paginate, data = await PaginatorQuery.paginate(
         table_name=Budgets,
         input_data=input_data,
         session=db,
-        filters=(Budgets.user_id == request.session["user"]["id"],) + filter,
+        filters=(Budgets.user_id == request.session["user"]["id"], *filter),
     )
     return PaginationResponse(
         pagination=paginate,

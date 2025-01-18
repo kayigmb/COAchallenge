@@ -1,9 +1,14 @@
 from uuid import UUID
 
+from fastapi import status
 from sqlmodel import Session
 
 from src.models.models import Categories, SubCategories
-from src.schemas.categories_schema import CategoryInput, SubCategoryInput
+from src.schemas.categories_schema import (
+    CategoryInput,
+    SubCategoryInput,
+    SubCategoryUpdate,
+)
 from src.utils.fetcher import Fetcher
 
 
@@ -18,6 +23,7 @@ class CategoryController:
             table=Categories,
             where=(Categories.name == name,),
             error="Category already Exists",
+            status_code=status.HTTP_409_CONFLICT,
         ).get_exist()
 
         return get_accounts
@@ -76,7 +82,7 @@ class SubCategoryController:
         self.database.refresh(category)
         return category
 
-    def update_category(self, input_data: CategoryInput, sub_category_id: UUID):
+    def update_category(self, input_data: SubCategoryUpdate, sub_category_id: UUID):
         get_category = Fetcher(
             database=self.database,
             table=SubCategories,

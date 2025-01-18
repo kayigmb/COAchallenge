@@ -25,6 +25,6 @@ class BudgetInput(BaseModel):
 
 
 class BudgetUpdate(SQLModel):
-    limit: float
-    start_date: datetime
-    end_date: datetime
+    limit: Optional[float] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None

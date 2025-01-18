@@ -4,7 +4,7 @@ from typing import Annotated, Generic, List, Type, TypeVar
 
 from fastapi.params import Query
 from pydantic import BaseModel
-from sqlmodel import Session, SQLModel, func, select
+from sqlmodel import Session, SQLModel, func, or_, select
 
 T = TypeVar("T")
 
@@ -43,20 +43,25 @@ class PaginatorQuery(Generic[Q]):
     ):
         offset = (input_data.page - 1) * input_data.per_page
 
+        is_deleted_column = getattr(table_name, "is_deleted", None)
+        if is_deleted_column is not None:
+            filters = (
+                *filters,
+                or_(is_deleted_column == False, is_deleted_column.is_(None)),
+            )
         fetching_query = (
             select(table_name)
-            .where(*filters, False == getattr(table_name, "is_deleted"))
+            .where(
+                *filters,
+            )
             .offset(offset)
             .limit(input_data.per_page)
+            .order_by(table_name.created_at.desc())
         )
 
         total_data = session.exec(fetching_query).all()
 
-        get_count_query = (
-            select(func.count())
-            .select_from(table_name)
-            .where(*filters, False == getattr(table_name, "is_deleted"))
-        )
+        get_count_query = select(func.count()).select_from(table_name).where(*filters)
         count = session.exec(get_count_query).one()
 
         page_page_total: int = math.ceil(count / input_data.per_page)

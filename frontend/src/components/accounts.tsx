@@ -20,7 +20,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CircleX, CreditCard } from "lucide-react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import request from "@/lib/axios";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "react-toastify";
@@ -33,35 +33,49 @@ import {
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import {AppRouterInstance} from "next/dist/shared/lib/app-router-context.shared-runtime";
+import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
+import { GetUserAccounts } from "@/hooks/useGetFunctions";
 
 interface SingleAccountProps {
   id: string;
   name: string;
   type?: string;
   refetch?: () => void;
+  balance: number;
 }
 
-interface setNewParamsProps{
-    name: string;
-    value: string;
-    searchParams: URLSearchParams;
-    pathname: string;
-    router: AppRouterInstance;
+interface setNewParamsProps {
+  name: string;
+  value: string;
+  searchParams: URLSearchParams;
+  pathname: string;
+  router: AppRouterInstance;
 }
 
-function setNewParams({name,value,searchParams,pathname,router}: setNewParamsProps) {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set(name, value);
-    const newUrl = `${pathname}?${params.toString()}`;
-    router.push(newUrl);
+function setNewParams({
+  name,
+  value,
+  searchParams,
+  pathname,
+  router,
+}: setNewParamsProps) {
+  const params = new URLSearchParams(searchParams.toString());
+  params.set(name, value);
+  const newUrl = `${pathname}?${params.toString()}`;
+  router.push(newUrl);
 }
 
-function SingleAccount({ id, name, type, refetch }: SingleAccountProps) {
+function SingleAccount({
+  id,
+  name,
+  type,
+  refetch,
+  balance,
+}: SingleAccountProps) {
   const searchParams = useSearchParams();
   const getSearchParams = searchParams.get("account") || null;
   const router = useRouter();
-  const pathname = usePathname()
+  const pathname = usePathname();
 
   const deleteAccount = useMutation({
     mutationFn: async (id: string) => {
@@ -77,24 +91,30 @@ function SingleAccount({ id, name, type, refetch }: SingleAccountProps) {
 
   return (
     <div
-      className={`w-full min-h-[50px] p-5 flex border rounded-2xl ${getSearchParams === id ? "bg-gray-200" : ""}`}
+      className={`w-full min-h-[50px] justify-between p-5 flex border rounded-2xl ${getSearchParams === id ? "bg-gray-200" : ""}`}
       onClick={(e) => {
-          e.preventDefault()
-          setNewParams({
-              name: "account",
-              value: id,
-              searchParams: new URLSearchParams(searchParams.toString()),
-              pathname,
-              router
-          });
+        e.preventDefault();
+        setNewParams({
+          name: "account",
+          value: id,
+          searchParams: new URLSearchParams(searchParams.toString()),
+          pathname,
+          router,
+        });
       }}
     >
-      <div className={"flex gap-5 w-full items-center"}>
+      <div className={"flex gap-5 group w-full items-center"}>
         <div className={"flex gap-5"}>
           <CreditCard />
           <p className={"uppercase"}>{name}</p>
         </div>
         <p className={"capitalize"}>{type}</p>
+        <div className={""}>
+          <p className={"capitalize hidden group-hover:block"}>
+            {balance.toLocaleString()}
+          </p>
+          <p className={"group-hover:hidden block"}>****</p>
+        </div>
         <Button
           className={"text-red-800"}
           variant={"link"}
@@ -120,6 +140,16 @@ const addAccountSchema = z.object({
 
 function AddAccount({ refetch }: { refetch?: () => void }) {
   const [open, setOpen] = useState(false);
+
+  const form = useForm<z.infer<typeof addAccountSchema>>({
+    resolver: zodResolver(addAccountSchema),
+    defaultValues: {
+      name: "",
+      type: "",
+      balance: 0.0,
+    },
+  });
+
   const { mutate, isPending } = useMutation({
     mutationFn: (data: z.infer<typeof addAccountSchema>) =>
       request.post("/accounts", data),
@@ -129,19 +159,11 @@ function AddAccount({ refetch }: { refetch?: () => void }) {
         refetch();
       }
       setOpen(false);
+      form.reset();
     },
     onError: (error) => {
       console.log(error);
       toast.error("Failed to add account");
-    },
-  });
-
-  const form = useForm<z.infer<typeof addAccountSchema>>({
-    resolver: zodResolver(addAccountSchema),
-    defaultValues: {
-      name: "",
-      type: "",
-      balance: 0.0,
     },
   });
 
@@ -185,7 +207,7 @@ function AddAccount({ refetch }: { refetch?: () => void }) {
                       defaultValue={field.value}
                     >
                       <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select a type" />
+                        <SelectValue placeholder="Select a Type" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="momo">Mobile Money</SelectItem>
@@ -229,32 +251,25 @@ function AddAccount({ refetch }: { refetch?: () => void }) {
 }
 
 export default function Accounts() {
-
-    const searchParams = new URLSearchParams();
-    const pathname = usePathname();
-    const router = useRouter();
-
-  const { data, isPending, refetch } = useQuery({
-    queryKey: ["accounts"],
-    queryFn: async () => {
-      const data = await request.get(`/accounts`);
-        setNewParams({
-            name: "account",
-            value: data?.data[0].id,
-            searchParams: new URLSearchParams(searchParams.toString()),
-            pathname,
-            router
-        });
-        return data?.data;
-    },
-    staleTime: 1000 * 5 * 60,
-  });
+  const router = useRouter();
+  const pathname = usePathname();
+  const { data, isPending, refetch } = GetUserAccounts();
 
   return (
     <Card className={"p-5 space-y-4"}>
       <div className={"flex w-full items-center justify-between"}>
         <h1 className={"font-bold"}>Accounts</h1>
-        <AddAccount refetch={refetch} />
+        <div>
+          <Button
+            variant={"link"}
+            onClick={() => {
+              router.replace(pathname, undefined);
+            }}
+          >
+            Overall Budget
+          </Button>
+          <AddAccount refetch={refetch} />
+        </div>
       </div>
       <div className={"space-y-3"}>
         {isPending ? (
@@ -263,6 +278,10 @@ export default function Accounts() {
             <Skeleton className="w-full h-10 rounded-2xl" />
             <Skeleton className="w-full h-10 rounded-2xl" />
           </div>
+        ) : data && data.length === 0 ? (
+          <>
+            <div>No Account!</div>
+          </>
         ) : (
           <>
             {data?.map((item: SingleAccountProps) => (
@@ -272,6 +291,7 @@ export default function Accounts() {
                 name={item.name}
                 type={item.type}
                 refetch={refetch}
+                balance={item.balance}
               />
             ))}
           </>

@@ -46,6 +46,6 @@ echo "__pycache__/" >> ~/.gitignore_global
 *.mov
 *.wmv
 .venv
-alembic/versions/*.py
+migrations/versions/*.py
 .env
 poetry.lock
