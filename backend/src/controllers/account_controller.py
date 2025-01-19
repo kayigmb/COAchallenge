@@ -1,6 +1,7 @@
 from typing import Generic, TypeVar
 from uuid import UUID
 
+from fastapi import status
 from sqlmodel import Session
 
 from src.models.models import Accounts
@@ -19,8 +20,12 @@ class AccountController(Generic[T]):
         get_accounts = Fetcher(
             database=self.db,
             table=Accounts,
-            where=(Accounts.name == name,),
+            where=(
+                Accounts.name == name,
+                Accounts.user_id == self.user_id,
+            ),
             error="Accounts already Exists",
+            status_code=status.HTTP_400_BAD_REQUEST,
         ).get_exist()
         return get_accounts
 

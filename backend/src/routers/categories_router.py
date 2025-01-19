@@ -2,11 +2,22 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Request, status
 
-from src.controllers.categories_controller import CategoryController
+from src.controllers.categories_controller import (
+    CategoryController,
+    SubCategoryController,
+)
 from src.database import database
 from src.middlewares.auth import auth
-from src.models.models import Categories
-from src.schemas.categories_schema import CategoryInput, CategoryResponse
+from src.models.models import Categories, SubCategories
+from src.schemas.categories_schema import (
+    CategoryFullResponse,
+    CategoryInput,
+    CategoryResponse,
+    SubCategoryFullResponse,
+    SubCategoryInput,
+    SubCategoryResponse,
+    SubCategoryUpdate,
+)
 from src.schemas.common_schema import ResponseSchema
 from src.utils.fetcher import Fetcher
 from src.utils.paginator import Paginate, PaginationResponse, PaginatorQuery
@@ -23,7 +34,7 @@ router_sub = APIRouter(
 @router.get(
     "",
     status_code=status.HTTP_200_OK,
-    response_model=PaginationResponse[CategoryResponse],
+    response_model=PaginationResponse[CategoryFullResponse],
 )
 async def get_categories(
     request: Request, db: database, input_data: Paginate = Depends()
@@ -36,7 +47,17 @@ async def get_categories(
     )
     return PaginationResponse(
         pagination=pagination,
-        data=[CategoryResponse(**account.model_dump()) for account in data or []],
+        data=[
+            CategoryFullResponse(
+                category=CategoryResponse(**account.model_dump()),
+                sub_category=[
+                    SubCategoryResponse(**sub_category.model_dump())
+                    for sub_category in account.sub_categories or []
+                    if not sub_category.is_deleted
+                ],
+            )
+            for account in data or []
+        ],
     )
 
 
@@ -104,29 +125,101 @@ async def delete_category(category_id: UUID, db: database):
 
     get_category.is_deleted = True
     db.commit()
-    return {"message": "Account deleted"}
+    return {"message": "Category deleted"}
 
 
-@router_sub.get("")
-async def get_sub_categories():
-    return {"sub_categories": []}
+@router_sub.get(
+    "",
+    status_code=status.HTTP_200_OK,
+    response_model=PaginationResponse[SubCategoryFullResponse],
+)
+async def get_sub_categories(
+    db: database, request: Request, input_data: Paginate = Depends()
+):
+    pagination, data = await PaginatorQuery.paginate(
+        table_name=SubCategories,
+        input_data=input_data,
+        session=db,
+        filters=(SubCategories.user_id == request.session["user"]["id"],),
+    )
+    return PaginationResponse(
+        pagination=pagination,
+        data=[
+            SubCategoryFullResponse(
+                sub_category=SubCategoryResponse(**account.model_dump()),
+                category=CategoryResponse(**account.categories.model_dump()),
+            )
+            for account in data or []
+        ],
+    )
 
 
-@router_sub.get("/{sub_category_id}")
-async def get_sub_category(sub_category_id: UUID):
-    return {"sub_category_id": sub_category_id}
+@router_sub.get(
+    "/{sub_category_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=ResponseSchema[SubCategoryResponse],
+)
+async def get_sub_category(sub_category_id: UUID, db: database):
+    get_category = Fetcher(
+        database=db,
+        table=SubCategories,
+        where=(SubCategories.id == sub_category_id,),
+        error="SubCategory not found",
+    ).get_one()
+    return ResponseSchema(
+        message="Account found",
+        data=SubCategoryResponse(**get_category.model_dump()),
+    )
 
 
-@router_sub.post("")
-async def create_sub_category():
-    return {"message": "SubCategory created"}
+@router_sub.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    response_model=ResponseSchema[SubCategoryResponse],
+)
+async def create_sub_category(
+    input_data: SubCategoryInput, db: database, request: Request
+):
+    add_new_sub_category = SubCategoryController(
+        database=db,
+        user=request.session["user"]["id"],
+    ).add_sub_category(input_data)
+
+    return ResponseSchema(
+        message="Subcategory added",
+        data=SubCategoryResponse(**add_new_sub_category.model_dump()),
+    )
 
 
-@router_sub.patch("/{sub_category_id}")
-async def update_sub_category(sub_category_id: UUID):
-    return {"message": "SubCategory updated"}
+@router_sub.patch(
+    "/{sub_category_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=ResponseSchema[SubCategoryResponse],
+)
+async def update_sub_category(
+    sub_category_id: UUID, request: Request, input_data: SubCategoryUpdate, db: database
+):
+
+    update = SubCategoryController(
+        database=db,
+        user=request.session["user"]["id"],
+    ).update_category(input_data, sub_category_id)
+
+    return ResponseSchema(
+        message="Subcategory added",
+        data=SubCategoryResponse(**update.model_dump()),
+    )
 
 
-@router_sub.delete("/{sub_category_id}")
-async def delete_sub_category(sub_category_id: UUID):
-    return {"message": "SubCategory deleted"}
+@router_sub.delete("/{sub_category_id}", status_code=status.HTTP_200_OK)
+async def delete_sub_category(sub_category_id: UUID, db: database):
+    get_category = Fetcher(
+        database=db,
+        table=SubCategories,
+        where=(SubCategories.id == sub_category_id,),
+        error="SubCategory not found",
+    ).get_one()
+
+    get_category.is_deleted = True
+    db.commit()
+    return {"message": "Subcategory  deleted"}

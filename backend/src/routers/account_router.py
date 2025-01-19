@@ -35,11 +35,14 @@ async def get_accounts(
     status_code=status.HTTP_200_OK,
     response_model=ResponseSchema[AccountsResult],
 )
-async def get_account(db: database, account_id: UUID):
+async def get_account(request: Request, db: database, account_id: UUID):
     get_accounts = Fetcher(
         database=db,
         table=Accounts,
-        where=(Accounts.id == account_id,),
+        where=(
+            Accounts.id == account_id,
+            Accounts.user_id == request.session["user"]["id"],
+        ),
         error="Account not found",
     ).get_one()
     return ResponseSchema(
@@ -85,11 +88,14 @@ async def update_account(
 
 
 @router.delete("/{account_id}")
-async def delete_account(db: database, account_id: UUID):
+async def delete_account(request: Request, db: database, account_id: UUID):
     get_accounts = Fetcher(
         database=db,
         table=Accounts,
-        where=(Accounts.id == account_id,),
+        where=(
+            Accounts.id == account_id,
+            Accounts.user_id == request.session["user"]["id"],
+        ),
         error="Account not found",
     ).get_one()
     get_accounts.is_deleted = True

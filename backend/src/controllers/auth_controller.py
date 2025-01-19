@@ -108,8 +108,8 @@ class AuthController:
         )
         if not compared_password:
             raise HTTPException(
-                detail="Invalid email or password",
-                status_code=status.HTTP_401_UNAUTHORIZED,
+                status.HTTP_400_BAD_REQUEST,
+                "User is already registered",
             )
         create_token = create_access_token(
             TokenData(
