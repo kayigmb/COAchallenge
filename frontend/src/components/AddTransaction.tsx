@@ -34,6 +34,7 @@ import {
   GetUserAccounts,
   GetUserBudgets,
   GetUserCategories,
+  GetUserNotifications,
 } from "@/hooks/useGetFunctions";
 
 export const addTransactionSchema = z.object({
@@ -66,6 +67,7 @@ const AddTransaction = ({ refetch }: { refetch: () => void }) => {
   const userAccount = GetUserAccounts();
   const userBudgets = GetUserBudgets();
   const userCategories = GetUserCategories();
+  const userNotifications = GetUserNotifications();
 
   const { mutate, isPending } = useMutation({
     mutationFn: (data: z.infer<typeof addTransactionSchema>) =>
@@ -76,6 +78,7 @@ const AddTransaction = ({ refetch }: { refetch: () => void }) => {
       refetch();
       form.reset();
       await userAccount.refetch();
+      await userNotifications.refetch();
       await userBudgets.refetch();
       return;
     },

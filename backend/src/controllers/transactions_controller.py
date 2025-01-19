@@ -9,10 +9,12 @@ from src.models.models import (
     BudgetStatusTypesEnum,
     BudgetTypesEnum,
     Categories,
+    Notifications,
     SubCategories,
     Transactions,
     TransactionTypesEnum,
 )
+from src.routers.notification_router import manager
 from src.schemas.transactions_schema import TransactionsInput
 from src.utils.fetcher import Fetcher
 
@@ -59,14 +61,31 @@ async def add_new_transaction(
             Budgets.status == BudgetStatusTypesEnum.ACTIVE,
             Budgets.user_id == user_id,
             Budgets.type == BudgetTypesEnum.ACCOUNT,
+            Budgets.account_id == account.id,
         ),
     ).get_value()
 
     if budget_overall and TransactionTypesEnum.EXPENSE == transaction.type:
         budget_overall.amount += transaction.amount
+        if budget_overall.amount > budget_overall.limit:
+            await manager.send_personal_message(user_id=user_id, message="transaction")
+            db.add(
+                Notifications(
+                    user_id=user_id, message="Budget limit exceeded for overall budget"
+                )
+            )
 
     if budget_account and TransactionTypesEnum.EXPENSE == transaction.type:
+        print(budget_account)
         budget_account.amount += transaction.amount
+        if budget_account.amount > budget_account.limit:
+            await manager.send_personal_message(user_id=user_id, message="transaction")
+            db.add(
+                Notifications(
+                    user_id=user_id,
+                    message=f"Budget limit exceeded for account {account.name}",
+                )
+            )
 
     if transaction.type == TransactionTypesEnum.INCOME:
         account.balance += transaction.amount

@@ -14,12 +14,12 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  if (typeof window !== "undefined") {
-    const token = localStorage.getItem("auth");
-    if (!token) {
-      window.location.href = "/login";
-    }
-  }
+  // if (typeof window !== "undefined") {
+  //   const token = localStorage.getItem("auth");
+  //   if (!token) {
+  //     window.location.href = "/login";
+  //   }
+  // }
   return (
     <html lang="en">
       <body>

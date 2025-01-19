@@ -16,6 +16,7 @@ from src.routers import (
     auth_router,
     budget_router,
     categories_router,
+    notification_router,
     transactions_router,
 )
 from src.utils.universal_errors import get_universal_errors
@@ -36,15 +37,29 @@ app = FastAPI(
     version="0.0.1",
 )
 
+ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:3000", "http://localhost"],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["Content-Type", "Authorization"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
 )
 app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
 app.add_middleware(BaseHTTPMiddleware, dispatch=get_universal_errors())
+
+
+# @app.middleware("http")
+# async def debug_middleware(request, call_next):
+#     print(f"Request path: {request.url.path}")
+#     print(f"Request headers: {request.headers}")
+#     response = await call_next(request)
+#     print(f"Response headers: {response.headers}")
+#     return response
 
 
 @app.get("/", dependencies=[Depends(auth)])
@@ -60,6 +75,8 @@ routes = [
     categories_router.router,
     categories_router.router_sub,
     budget_router.router,
+    notification_router.router,
+    notification_router.router_notification,
 ]
 
 for route in routes:

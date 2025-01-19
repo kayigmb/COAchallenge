@@ -38,8 +38,8 @@ axiosInstance.interceptors.response.use(
       error?.response?.data.detail === "Not authenticated"
     ) {
       if (typeof window !== "undefined") {
-        localStorage.clear();
-        window.location.href = "/login";
+        // localStorage.clear();
+        // window.location.href = "/login";
       }
     }
 

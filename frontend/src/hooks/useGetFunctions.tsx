@@ -77,13 +77,26 @@ export function GetUserBudgets() {
 }
 
 export function GetUserCategories() {
-    const { data, isPending, refetch } = useQuery({
-        queryKey: ["categories"],
-        queryFn: async () => {
-            const data = await request.get("/categories");
-            return data.data;
-        },
-        staleTime: 1000 * 60 * 5,
-    });
-    return { data, isPending, refetch };
+  const { data, isPending, refetch } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const data = await request.get("/categories");
+      return data.data;
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+  return { data, isPending, refetch };
 }
+
+export function GetUserNotifications() {
+  const { data: userNotifications, refetch } = useQuery({
+    queryKey: ["notifications"],
+    queryFn: async () => {
+      const data = await request.get("/notifications");
+      return data?.data;
+    },
+  });
+
+  return { userNotifications, refetch };
+}
+

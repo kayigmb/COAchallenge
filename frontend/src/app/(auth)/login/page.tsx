@@ -34,10 +34,13 @@ export default function LoginPage() {
     onSuccess: (res: unknown) => {
       const token: string = res?.data.access_token;
       localStorage.setItem("auth", token);
-      return router.push("/");
+      // window.location.href = "/";
+      router.push("/");
+      return;
     },
     onError: () => {
       toast.error("Invalid Username or password");
+      console.log(error);
       return;
     },
   });
@@ -51,7 +54,7 @@ export default function LoginPage() {
   });
 
   function onSubmit(form: z.infer<typeof loginFormSchema>) {
-    return mutate(form);
+    mutate(form);
   }
 
   return (

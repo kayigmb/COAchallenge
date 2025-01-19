@@ -61,7 +61,8 @@ export default function RegisterPage() {
   });
 
   function onSubmit(form: z.infer<typeof registerFormSchema>) {
-    return mutate(form);
+    console.log(form);
+    mutate(form);
   }
 
   return (
